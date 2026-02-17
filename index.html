@@ -1,0 +1,449 @@
+<!-- blockzie-vr/index.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Blockzie AR/VR Demo</title>
+
+    <!-- Libraries -->
+    <!-- Libraries -->
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
+    <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
+    <!-- Import Map for Three.js -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+      }
+    }
+  </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #blocklyDiv {
+            width: 40%;
+            height: 100%;
+            border-right: 1px solid #ddd;
+        }
+
+        /* Blockly workspace styling */
+        .blocklyMainBackground {
+            fill: #ffffff !important;
+        }
+
+        .blocklyToolboxDiv {
+            background-color: #f5f5f5 !important;
+            border-right: 1px solid #ddd !important;
+        }
+
+        .blocklyFlyoutBackground {
+            fill: #ffffff !important;
+            fill-opacity: 1 !important;
+        }
+
+        .blocklyTreeRow {
+            padding: 10px 8px !important;
+            line-height: 22px !important;
+        }
+
+        .blocklyTreeLabel {
+            font-size: 14px !important;
+            font-weight: 500 !important;
+        }
+
+        .blocklyTreeIcon {
+            width: 32px !important;
+            height: 32px !important;
+        }
+
+        #scene {
+            width: 60%;
+            height: 100%;
+            position: relative;
+            background: #e8eef7;
+        }
+
+        #run-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease;
+        }
+
+        #run-btn:hover {
+            background: #45a049;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
+        }
+
+        #run-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Control buttons panel */
+        #controls-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease;
+            min-width: 140px;
+            text-align: left;
+        }
+
+        .control-btn:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        #stop-btn {
+            background: #f44336;
+        }
+
+        #stop-btn:hover {
+            background: #da190b;
+        }
+
+        #reset-btn {
+            background: #FF9800;
+        }
+
+        #reset-btn:hover {
+            background: #e68900;
+        }
+
+        #exit-vr-btn {
+            background: #9C27B0;
+        }
+
+        #exit-vr-btn:hover {
+            background: #7b1fa2;
+        }
+
+        .bumper-btn {
+            background: #2196F3;
+        }
+
+        .bumper-btn:hover {
+            background: #0b7dda;
+        }
+
+        .bumper-btn.pressed {
+            background: #0d47a1;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Console panel */
+        #console-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            max-height: 200px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #A5D6A7;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #console-header {
+            background: #A5D6A7;
+            color: #333;
+            padding: 8px 12px;
+            font-weight: 600;
+            font-size: 14px;
+            border-bottom: 1px solid #81C784;
+        }
+
+        #console-output {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            background: white;
+        }
+
+        .console-row {
+            margin-bottom: 4px;
+            word-wrap: break-word;
+        }
+
+        #console-output::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #console-output::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        #console-output::-webkit-scrollbar-thumb {
+            background: #A5D6A7;
+            border-radius: 4px;
+        }
+
+        #console-output::-webkit-scrollbar-thumb:hover {
+            background: #81C784;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="blocklyDiv"></div>
+    <div id="scene">
+        <button id="run-btn" onclick="runCode()">▶ Run Code</button>
+        <div id="controls-panel">
+            <button id="stop-btn" class="control-btn" onclick="stopCode()">⏹ Stop</button>
+            <button id="reset-btn" class="control-btn" onclick="resetRobot()">Reset</button>
+            <button id="exit-vr-btn" class="control-btn" onclick="exitVR()">🚪 Exit VR</button>
+            <button id="left-bumper-btn" class="control-btn bumper-btn" onmousedown="pressBumper('left')"
+                onmouseup="releaseBumper('left')" ontouchstart="pressBumper('left')"
+                ontouchend="releaseBumper('left')">◀ Left Bumper</button>
+            <button id="right-bumper-btn" class="control-btn bumper-btn" onmousedown="pressBumper('right')"
+                onmouseup="releaseBumper('right')" ontouchstart="pressBumper('right')"
+                ontouchend="releaseBumper('right')">▶ Right Bumper</button>
+        </div>
+        <div id="console-panel">
+            <div id="console-header">Console</div>
+            <div id="console-output"></div>
+        </div>
+    </div>
+
+    <!-- Toolbox -->
+    <xml id="toolbox" style="display: none">
+        <category name="Events" colour="#FFD500">
+            <block type="when_run"></block>
+        </category>
+
+        <category name="Drivetrain" colour="#7EC4E8">
+            <category name="Actions" colour="#7EC4E8">
+                <block type="drive"></block>
+                <block type="drive_for"></block>
+                <block type="turn"></block>
+                <block type="turn_for"></block>
+                <block type="turn_to_heading"></block>
+                <block type="turn_to_rotation"></block>
+                <block type="stop_driving"></block>
+            </category>
+
+            <category name="Settings" colour="#7EC4E8">
+                <block type="set_drive_velocity"></block>
+                <block type="set_turn_velocity"></block>
+                <block type="set_drive_heading"></block>
+                <block type="set_drive_rotation"></block>
+                <block type="set_drive_timeout"></block>
+            </category>
+
+            <category name="Values" colour="#7EC4E8">
+                <block type="drive_is_done"></block>
+                <block type="drive_is_moving"></block>
+                <block type="drive_heading"></block>
+                <block type="drive_rotation"></block>
+            </category>
+        </category>
+
+        <category name="Magnet" colour="#A589CF">
+            <block type="energize_magnet"></block>
+        </category>
+
+        <category name="Drawing" colour="#C77EB5">
+            <block type="move_pen"></block>
+            <block type="set_pen_to_width"></block>
+            <block type="set_pen_to_color"></block>
+            <block type="set_pen_color"></block>
+            <block type="fill_area"></block>
+        </category>
+
+        <category name="Sensing" colour="#5CB1A6">
+            <label text="Bumper"></label>
+            <block type="bumper_pressed"></block>
+            <block type="when_bumper"></block>
+            <label text="Distance"></label>
+            <block type="distance_found_object"></block>
+            <block type="object_distance"></block>
+            <label text="Eye"></label>
+            <block type="eye_near_object"></block>
+            <block type="eye_detects_color"></block>
+            <block type="eye_brightness"></block>
+            <block type="when_eye"></block>
+            <label text="Location"></label>
+            <block type="position"></block>
+            <block type="position_angle"></block>
+        </category>
+
+        <category name="Console" colour="#A5D6A7">
+            <block type="print">
+                <value name="VALUE">
+                    <shadow type="text">
+                        <field name="TEXT">Hello, Robot!</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="set_cursor_to_next_row"></block>
+            <block type="clear_all_rows"></block>
+            <block type="set_print_precision"></block>
+            <block type="set_print_color"></block>
+        </category>
+
+        <category name="Logic" colour="#FFAB19">
+            <category name="Control" colour="#FFAB19">
+                <block type="wait"></block>
+                <block type="wait_until"></block>
+                <block type="repeat"></block>
+                <block type="forever"></block>
+                <block type="repeat_until"></block>
+                <block type="while"></block>
+                <block type="controls_if"></block>
+                <block type="controls_if_else"></block>
+                <block type="break"></block>
+                <block type="stop_project"></block>
+            </category>
+
+            <category name="Timer" colour="#4C97FF">
+                <block type="reset_timer"></block>
+                <block type="timer_in_seconds"></block>
+                <block type="when_timer"></block>
+            </category>
+
+            <category name="Events" colour="#FFD500">
+                <block type="when_i_receive"></block>
+                <block type="broadcast"></block>
+                <block type="broadcast_and_wait"></block>
+            </category>
+
+            <category name="Operators" colour="#40BF4A">
+                <block type="math_number"></block>
+                <block type="text"></block>
+                <block type="math_operator">
+                    <value name="A">
+                        <shadow type="math_number">
+                            <field name="NUM">0</field>
+                        </shadow>
+                    </value>
+                    <value name="B">
+                        <shadow type="math_number">
+                            <field name="NUM">0</field>
+                        </shadow>
+                    </value>
+                </block>
+                <block type="comparison_operator">
+                    <value name="A">
+                        <shadow type="math_number">
+                            <field name="NUM">0</field>
+                        </shadow>
+                    </value>
+                    <value name="B">
+                        <shadow type="math_number">
+                            <field name="NUM">50</field>
+                        </shadow>
+                    </value>
+                </block>
+                <block type="logical_operator"></block>
+                <block type="not_operator"></block>
+                <block type="range_operator"></block>
+                <block type="pick_random"></block>
+                <block type="round_number"></block>
+                <block type="math_functions"></block>
+                <block type="atan2"></block>
+                <block type="remainder"></block>
+                <block type="join">
+                    <value name="A">
+                        <shadow type="text">
+                            <field name="TEXT">apple</field>
+                        </shadow>
+                    </value>
+                    <value name="B">
+                        <shadow type="text">
+                            <field name="TEXT">banana</field>
+                        </shadow>
+                    </value>
+                </block>
+                <block type="letter"></block>
+                <block type="length"></block>
+                <block type="contains"></block>
+                <block type="convert"></block>
+            </category>
+        </category>
+
+        <category name="Variables" colour="#FF8C1A" custom="VARIABLE"></category>
+
+        <category name="My Blocks" colour="#5CA6DB" custom="PROCEDURE"></category>
+
+        <category name="Comments" colour="#FFFFCC">
+            <label text="Add notes to your code"></label>
+            <block type="comment"></block>
+        </category>
+
+        <category name="Legacy Movement" colour="#5CB1D6">
+            <block type="move_forward"></block>
+            <block type="turn_left"></block>
+            <block type="turn_right"></block>
+        </category>
+
+        <category name="Control" colour="#FFAB19">
+            <block type="controls_repeat_ext">
+                <value name="TIMES">
+                    <shadow type="math_number">
+                        <field name="NUM">4</field>
+                    </shadow>
+                </value>
+            </block>
+        </category>
+    </xml>
+
+    <!-- Logic Scripts -->
+    <script src="./src/blockly/blocks.js"></script>
+    <script src="./src/blockly/generator.js"></script>
+
+    <!-- Main Module -->
+    <script type="module" src="./src/main.js"></script>
+</body>
+
+</html>
