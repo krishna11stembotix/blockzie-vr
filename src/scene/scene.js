@@ -2,6 +2,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { createCity } from './city.js';
 // NOTE: VRButton is intentionally NOT used here. We call navigator.xr.requestSession()
 // directly from a real user-gesture handler in main.js to satisfy browser security policy.
 
@@ -16,9 +17,8 @@ export const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.xr.enabled = true; // Required for WebXR
 
-// ── Grid ──
-const grid = new THREE.GridHelper(20, 20, 0x888888, 0xaaaaaa);
-scene.add(grid);
+// ── Environment ──
+createCity(scene);
 
 // ── Lighting ──
 const ambientLight = new THREE.AmbientLight(0x606060);
@@ -113,7 +113,7 @@ export async function enterVRHeadset() {
         // Update toolbar button to "Exit VR"
         const vrBtn = document.getElementById('enter-vr-btn');
         if (vrBtn) {
-            vrBtn.innerHTML = '🚪 Exit VR';
+            vrBtn.innerHTML = ' Exit VR';
             vrBtn.onclick = () => window.exitVR();
         }
 
@@ -122,7 +122,7 @@ export async function enterVRHeadset() {
             _currentXRSession = null;
             const btn = document.getElementById('enter-vr-btn');
             if (btn) {
-                btn.innerHTML = '🥽 Enter VR';
+                btn.innerHTML = ' Enter VR';
                 btn.onclick = () => window.enterVR();
             }
         });
