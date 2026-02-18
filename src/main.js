@@ -8,7 +8,8 @@ import {
     tickSimulatedVR,
     resizeRenderer
 } from './scene/scene.js';
-import { initRobot, updateRobot, resetRobot as resetRobotScene } from './scene/robot.js';
+import { initRobot, updateRobot, resetRobot as resetRobotScene, getRobotMesh } from './scene/robot.js';
+import { checkMissionComplete } from './missions.js';
 import { addToQueue, clearQueue, runCommands, stopExecution } from './runtime/executor.js';
 import {
     setDriveVelocity,
@@ -58,8 +59,8 @@ import {
 const sceneContainer = document.getElementById('scene');
 sceneContainer.appendChild(renderer.domElement);
 renderer.domElement.style.display = 'block';
-renderer.domElement.style.width   = '100%';
-renderer.domElement.style.height  = '100%';
+renderer.domElement.style.width = '100%';
+renderer.domElement.style.height = '100%';
 resizeRenderer();
 
 // ── Orbit controls (desktop default view) ──
@@ -112,6 +113,7 @@ renderer.setAnimationLoop(function () {
     tickSimulatedVR();
     updateOrbitControls();
     updateRobot();
+    checkMissionComplete(getRobotMesh());
     checkTimerEvents();
     renderer.render(scene, camera);
 });
@@ -124,38 +126,38 @@ const workspace = Blockly.inject('blocklyDiv', {
 // ── Global API exposed to eval'd block code ──
 window.addToQueue = addToQueue;
 
-window.setDriveVelocity  = setDriveVelocity;
-window.setTurnVelocity   = setTurnVelocity;
-window.setDriveHeading   = setDriveHeading;
-window.setDriveRotation  = setDriveRotation;
-window.setDriveTimeout   = setDriveTimeout;
-window.isDriveDone       = isDriveDone;
-window.isDriveMoving     = isDriveMoving;
-window.getDriveHeading   = getDriveHeading;
-window.getDriveRotation  = getDriveRotation;
+window.setDriveVelocity = setDriveVelocity;
+window.setTurnVelocity = setTurnVelocity;
+window.setDriveHeading = setDriveHeading;
+window.setDriveRotation = setDriveRotation;
+window.setDriveTimeout = setDriveTimeout;
+window.isDriveDone = isDriveDone;
+window.isDriveMoving = isDriveMoving;
+window.getDriveHeading = getDriveHeading;
+window.getDriveRotation = getDriveRotation;
 
-window.isBumperPressed     = isBumperPressed;
-window.onBumperEvent       = onBumperEvent;
+window.isBumperPressed = isBumperPressed;
+window.onBumperEvent = onBumperEvent;
 window.distanceFoundObject = distanceFoundObject;
-window.getObjectDistance   = getObjectDistance;
-window.eyeNearObject       = eyeNearObject;
-window.eyeDetectsColor     = eyeDetectsColor;
-window.getEyeBrightness    = getEyeBrightness;
-window.onEyeEvent          = onEyeEvent;
-window.getPosition         = getPosition;
+window.getObjectDistance = getObjectDistance;
+window.eyeNearObject = eyeNearObject;
+window.eyeDetectsColor = eyeDetectsColor;
+window.getEyeBrightness = getEyeBrightness;
+window.onEyeEvent = onEyeEvent;
+window.getPosition = getPosition;
 
-window.printToConsole     = printToConsole;
-window.setCursorToNextRow  = setCursorToNextRow;
-window.clearAllRows       = clearAllRows;
-window.setPrintPrecision   = setPrintPrecision;
-window.setPrintColor       = setPrintColor;
+window.printToConsole = printToConsole;
+window.setCursorToNextRow = setCursorToNextRow;
+window.clearAllRows = clearAllRows;
+window.setPrintPrecision = setPrintPrecision;
+window.setPrintColor = setPrintColor;
 
-window.resetTimer      = resetTimer;
-window.getTimerSeconds  = getTimerSeconds;
-window.onTimerEvent    = onTimerEvent;
+window.resetTimer = resetTimer;
+window.getTimerSeconds = getTimerSeconds;
+window.onTimerEvent = onTimerEvent;
 
-window.onEvent              = onEvent;
-window.broadcastEvent        = broadcastEvent;
+window.onEvent = onEvent;
+window.broadcastEvent = broadcastEvent;
 window.broadcastEventAndWait = broadcastEventAndWait;
 
 // ── Button handlers ──

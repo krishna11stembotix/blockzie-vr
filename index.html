@@ -73,6 +73,24 @@
             color: #FF8C00;
         }
 
+        .header-btn {
+            padding: 7px 18px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+        .header-btn:hover {
+            background: white;
+            color: #0d1b2a;
+        }
+
         #coding-playground-btn {
             padding: 7px 18px;
             font-size: 13px;
@@ -87,10 +105,7 @@
             text-transform: uppercase;
         }
 
-        #coding-playground-btn:hover {
-            background: white;
-            color: #0d1b2a;
-        }
+        
 
         /* ── Main content area (below header) ── */
         #main {
@@ -215,7 +230,7 @@
         #left-bumper-btn.pressed,
         #right-bumper-btn.pressed {
             background: #ddd;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         #run-btn {
@@ -271,7 +286,108 @@
             background: #1a2d40;
         }
 
-        /* ── Console ── */
+        #missionOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0d1b2a;
+            color: white;
+            padding: 50px;
+            z-index: 3000;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        #missionOverlay h2 {
+            margin-top: 20px;
+            color: #FF8C00;
+            font-size: 36px;
+            text-align: center;
+        }
+
+        .missions-container {
+            max-width: 800px;
+            margin: 40px auto;
+        }
+
+        .mission-item {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin: 15px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mission-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #FF8C00;
+            transform: translateY(-2px);
+        }
+
+        .mission-item h3 {
+            margin: 0 0 5px 0;
+            color: #4CAF50;
+        }
+
+        .mission-item p {
+            margin: 0;
+            color: #ccc;
+        }
+
+        #missionInstruction {
+            display: none;
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid #FF8C00;
+            z-index: 10;
+            pointer-events: none;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        #missionComplete {
+            display: none;
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: #28a745;
+            padding: 40px;
+            font-size: 32px;
+            font-weight: bold;
+            border-radius: 12px;
+            z-index: 3100;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            border: 4px solid #28a745;
+        }
+
+        .overlay-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            cursor: pointer;
+            font-size: 40px;
+            color: #fff;
+            transition: color 0.2s;
+        }
+
+        .overlay-close:hover {
+            color: #FF8C00;
+        }
+
         #console-section {
             flex-shrink: 0;
             display: flex;
@@ -351,13 +467,38 @@
 
 <body>
 
+    <!-- Mission Overlays -->
+    <div id="missionOverlay">
+        <span class="overlay-close" onclick="toggleMissions()">&times;</span>
+        <h2>Missions</h2>
+        <div class="missions-container">
+            <div class="mission-item" onclick="startMission(1)">
+                <h3>Mission 1: Reach the Glowing Crystal</h3>
+                <p>Program the robot to drive to the cyan crystal.</p>
+            </div>
+            <!-- Future missions can be added here -->
+        </div>
+    </div>
+
+    <!-- Mission Complete Pop-up -->
+    <div id="missionComplete">
+        Mission Complete! 🎉
+        <div style="font-size: 18px; margin-top: 15px; color: #555; font-weight: normal;">
+            <button onclick="closeMissionComplete()"
+                style="padding: 8px 16px; border-radius: 4px; border: 1px solid #28a745; background: #fff; color: #28a745; cursor: pointer;">Continue</button>
+        </div>
+    </div>
+
     <!-- Top Header -->
     <div id="header">
         <div id="logo">
             <div id="logo-icon">🟧</div>
             Blockzie <span class="vr-highlight">VR</span> Lab
         </div>
-        <button id="coding-playground-btn" onclick="">CODING PLAYGROUND</button>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <button class="header-btn" onclick="toggleMissions()">MISSIONS</button>
+            <button id="coding-playground-btn" onclick="closeMissions()">CODING PLAYGROUND</button>
+        </div>
     </div>
 
     <!-- Main layout -->
@@ -377,12 +518,14 @@
             <!-- Scene header with toolbar -->
             <div id="scene-panel-header">
                 <span class="dot"></span> 3D SCENE
+                <!-- Mission Instruction Overlay -->
+                <div id="missionInstruction">Goal: Reach the Crystal</div>
 
                 <!-- Toolbar buttons inline with header -->
                 <div style="display:flex; align-items:center; gap:8px; margin-left: 16px; flex:1;">
                     <button id="stop-btn" class="tb-btn" onclick="stopCode()">■ Stop</button>
                     <button id="reset-btn" class="tb-btn" onclick="resetRobot()">↺ Reset</button>
-                    <button id="enter-vr-btn" class="tb-btn" onclick="enterVR()">🥽 Enter VR</button>
+                    <button id="enter-vr-btn" class="tb-btn" onclick="enterVR()"> Enter VR</button>
                     <button id="left-bumper-btn" class="tb-btn"
                         onmousedown="pressBumper('left')" onmouseup="releaseBumper('left')"
                         ontouchstart="pressBumper('left')" ontouchend="releaseBumper('left')">◀ Left Bumper</button>
@@ -397,7 +540,7 @@
             <div id="scene">
                 <!-- Desktop VR simulation button inside scene -->
                 <button id="enter-vr-simulated-btn" onclick="enterVRSimulated()">
-                    🥽 Enter VR (Simulated)
+                     Enter VR (Simulated)
                 </button>
             </div>
 
@@ -410,6 +553,25 @@
             </div>
 
         </div>
+    </div>
+
+    <!-- Mission Overlays -->
+    <div id="missionOverlay">
+        <span class="overlay-close" onclick="toggleMissions()">&times;</span>
+        <h2>Missions</h2>
+        <div class="mission-item" onclick="startMission(1)">
+            <h3>Mission 1: Drive Forward</h3>
+            <p>Drive the robot forward 100 units.</p>
+        </div>
+        <div class="mission-item" onclick="startMission(2)">
+            <h3>Mission 2: Turn Around</h3>
+            <p>Turn the robot 180 degrees.</p>
+        </div>
+        <!-- More missions can be added here -->
+    </div>
+
+    <div id="missionComplete">
+        Mission Complete! 🎉
     </div>
 
     <!-- Toolbox -->
@@ -513,12 +675,28 @@
                 <block type="math_number"></block>
                 <block type="text"></block>
                 <block type="math_operator">
-                    <value name="A"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
-                    <value name="B"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                    <value name="A">
+                        <shadow type="math_number">
+                            <field name="NUM">0</field>
+                        </shadow>
+                    </value>
+                    <value name="B">
+                        <shadow type="math_number">
+                            <field name="NUM">0</field>
+                        </shadow>
+                    </value>
                 </block>
                 <block type="comparison_operator">
-                    <value name="A"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
-                    <value name="B"><shadow type="math_number"><field name="NUM">50</field></shadow></value>
+                    <value name="A">
+                        <shadow type="math_number">
+                            <field name="NUM">0</field>
+                        </shadow>
+                    </value>
+                    <value name="B">
+                        <shadow type="math_number">
+                            <field name="NUM">50</field>
+                        </shadow>
+                    </value>
                 </block>
                 <block type="logical_operator"></block>
                 <block type="not_operator"></block>
@@ -529,8 +707,16 @@
                 <block type="atan2"></block>
                 <block type="remainder"></block>
                 <block type="join">
-                    <value name="A"><shadow type="text"><field name="TEXT">apple</field></shadow></value>
-                    <value name="B"><shadow type="text"><field name="TEXT">banana</field></shadow></value>
+                    <value name="A">
+                        <shadow type="text">
+                            <field name="TEXT">apple</field>
+                        </shadow>
+                    </value>
+                    <value name="B">
+                        <shadow type="text">
+                            <field name="TEXT">banana</field>
+                        </shadow>
+                    </value>
                 </block>
                 <block type="letter"></block>
                 <block type="length"></block>
@@ -556,7 +742,9 @@
         <category name="Control" colour="#FFAB19">
             <block type="controls_repeat_ext">
                 <value name="TIMES">
-                    <shadow type="math_number"><field name="NUM">4</field></shadow>
+                    <shadow type="math_number">
+                        <field name="NUM">4</field>
+                    </shadow>
                 </value>
             </block>
         </category>
@@ -574,13 +762,41 @@
         }
         // enterVR (toolbar button) triggers headset VR
         // exitVR shim in case it's called before main.js loads
-        window.exitVR = window.exitVR || function() {};
-        window.pressBumper = window.pressBumper || function() {};
-        window.releaseBumper = window.releaseBumper || function() {};
-        window.runCode = window.runCode || function() {};
-        window.stopCode = window.stopCode || function() {};
-        window.resetRobot = window.resetRobot || function() {};
-        window.enterVR = window.enterVR || function() {};
+        window.exitVR = window.exitVR || function () { };
+        window.pressBumper = window.pressBumper || function () { };
+        window.releaseBumper = window.releaseBumper || function () { };
+        window.runCode = window.runCode || function () { };
+        window.stopCode = window.stopCode || function () { };
+        window.resetRobot = window.resetRobot || function () { };
+        window.enterVR = window.enterVR || function () { };
+
+        // Mission UI handlers
+        window.toggleMissions = function () {
+            const overlay = document.getElementById('missionOverlay');
+            overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
+        };
+
+        window.closeMissions = function () {
+            document.getElementById('missionOverlay').style.display = 'none';
+        }
+
+        window.closeMissionComplete = function () {
+            document.getElementById('missionComplete').style.display = 'none';
+        }
+
+        window.startMission = function (id) {
+            console.log("Starting mission:", id);
+            window.closeMissions();
+            // This function will be overridden or handled by missions.js
+            if (window.missionLogic && window.missionLogic.startMission) {
+                window.missionLogic.startMission(id);
+            }
+        };
+
+        // Initialize simplified mission logic namespace
+        window.missionLogic = {
+            startMission: function (id) { console.log("Mission logic not loaded yet"); }
+        };
     </script>
 
     <!-- Main Module -->

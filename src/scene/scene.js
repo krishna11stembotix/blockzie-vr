@@ -93,7 +93,7 @@ export async function enterVRHeadset() {
 
     // 3. Toggle: if a session is already active, end it
     if (_currentXRSession) {
-        await _currentXRSession.end().catch(() => {});
+        await _currentXRSession.end().catch(() => { });
         return;
     }
 
@@ -183,17 +183,17 @@ export function enterSimulatedVR() {
 
     _mouseMoveHandler = (e) => {
         if (!_simulatedVR) return;
-        _yaw   -= e.movementX * 0.002;
+        _yaw -= e.movementX * 0.002;
         _pitch -= e.movementY * 0.002;
-        _pitch  = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, _pitch));
+        _pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, _pitch));
         camera.rotation.set(_pitch, _yaw, 0);
     };
     _keyDownHandler = (e) => { _keys[e.code] = true; };
-    _keyUpHandler   = (e) => { _keys[e.code] = false; };
+    _keyUpHandler = (e) => { _keys[e.code] = false; };
 
     document.addEventListener('mousemove', _mouseMoveHandler);
-    document.addEventListener('keydown',   _keyDownHandler);
-    document.addEventListener('keyup',     _keyUpHandler);
+    document.addEventListener('keydown', _keyDownHandler);
+    document.addEventListener('keyup', _keyUpHandler);
 
     const hint = document.getElementById('vr-sim-hint');
     if (hint) hint.style.display = 'flex';
@@ -213,8 +213,8 @@ export function exitSimulatedVR() {
     if (document.pointerLockElement) document.exitPointerLock();
 
     document.removeEventListener('mousemove', _mouseMoveHandler);
-    document.removeEventListener('keydown',   _keyDownHandler);
-    document.removeEventListener('keyup',     _keyUpHandler);
+    document.removeEventListener('keydown', _keyDownHandler);
+    document.removeEventListener('keyup', _keyUpHandler);
 
     Object.keys(_keys).forEach(k => delete _keys[k]);
 
@@ -229,14 +229,14 @@ export function tickSimulatedVR() {
     if (!_simulatedVR) return;
 
     const forward = new THREE.Vector3(-Math.sin(_yaw), 0, -Math.cos(_yaw)).normalize();
-    const right   = new THREE.Vector3( Math.cos(_yaw), 0, -Math.sin(_yaw)).normalize();
+    const right = new THREE.Vector3(Math.cos(_yaw), 0, -Math.sin(_yaw)).normalize();
 
-    if (_keys['KeyW']     || _keys['ArrowUp'])    camera.position.addScaledVector(forward,  _simVRSpeed);
-    if (_keys['KeyS']     || _keys['ArrowDown'])  camera.position.addScaledVector(forward, -_simVRSpeed);
-    if (_keys['KeyA']     || _keys['ArrowLeft'])  camera.position.addScaledVector(right,   -_simVRSpeed);
-    if (_keys['KeyD']     || _keys['ArrowRight']) camera.position.addScaledVector(right,    _simVRSpeed);
-    if (_keys['Space'])                            camera.position.y += _simVRSpeed;
-    if (_keys['ShiftLeft'])                        camera.position.y -= _simVRSpeed;
+    if (_keys['KeyW'] || _keys['ArrowUp']) camera.position.addScaledVector(forward, _simVRSpeed);
+    if (_keys['KeyS'] || _keys['ArrowDown']) camera.position.addScaledVector(forward, -_simVRSpeed);
+    if (_keys['KeyA'] || _keys['ArrowLeft']) camera.position.addScaledVector(right, -_simVRSpeed);
+    if (_keys['KeyD'] || _keys['ArrowRight']) camera.position.addScaledVector(right, _simVRSpeed);
+    if (_keys['Space']) camera.position.y += _simVRSpeed;
+    if (_keys['ShiftLeft']) camera.position.y -= _simVRSpeed;
 }
 
 // ── Renderer resize ──
