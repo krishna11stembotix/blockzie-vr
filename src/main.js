@@ -1,9 +1,15 @@
 //  blockzie-vr/src/main.js
 
-
-import { scene, camera, renderer } from './scene/scene.js';
+import {
+    scene, camera, renderer,
+    initOrbitControls, updateOrbitControls,
+    enterVRHeadset, exitVRHeadset, isVRPresenting,
+    enterSimulatedVR, exitSimulatedVR, isSimulatedVR,
+    tickSimulatedVR,
+    resizeRenderer
+} from './scene/scene.js';
 import { initRobot, updateRobot, resetRobot as resetRobotScene } from './scene/robot.js';
-import { addToQueue, clearQueue, runCommands, commandQueue, stopExecution } from './runtime/executor.js';
+import { addToQueue, clearQueue, runCommands, stopExecution } from './runtime/executor.js';
 import {
     setDriveVelocity,
     setTurnVelocity,
@@ -48,132 +54,190 @@ import {
     clearEventListeners
 } from './runtime/events_state.js';
 
-// Setup Three.js scene
-const sceneContainer = document.getElementById("scene");
-// Clear previous if any (though usually empty on load)
-// sceneContainer.innerHTML = '';
+// ── Mount renderer into #scene container ──
+const sceneContainer = document.getElementById('scene');
 sceneContainer.appendChild(renderer.domElement);
+renderer.domElement.style.display = 'block';
+renderer.domElement.style.width   = '100%';
+renderer.domElement.style.height  = '100%';
+resizeRenderer();
 
-// Initialize robot
+// ── Orbit controls (desktop default view) ──
+initOrbitControls();
+
+// ── Robot ──
 initRobot();
 
-// Animation Loop
-// Animation Loop
+// ── Simulated VR hint overlay ──
+// Injected dynamically so it lives inside #scene
+(function injectSimVRHint() {
+    const hint = document.createElement('div');
+    hint.id = 'vr-sim-hint';
+    hint.style.cssText = `
+        display: none;
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(13,27,42,0.90);
+        color: #fff;
+        font-size: 13px;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        padding: 8px 18px;
+        border-radius: 6px;
+        border: 1px solid #FF8C00;
+        z-index: 100;
+        align-items: center;
+        gap: 12px;
+        pointer-events: none;
+        white-space: nowrap;
+    `;
+    hint.innerHTML =
+        '🥽 <strong>Simulated VR</strong>&nbsp;&nbsp;' +
+        'WASD / Arrows = move &nbsp;|&nbsp; Mouse = look &nbsp;|&nbsp;' +
+        'Space = up &nbsp;|&nbsp; Shift = down &nbsp;|&nbsp;' +
+        '<span style="color:#FF8C00;">Escape to exit</span>';
+    sceneContainer.appendChild(hint);
+})();
+
+// Exit simulated VR automatically when pointer lock is released (user presses Esc)
+document.addEventListener('pointerlockchange', () => {
+    if (!document.pointerLockElement && isSimulatedVR()) {
+        exitSimulatedVR();
+    }
+});
+
+// ── Animation Loop ──
 renderer.setAnimationLoop(function () {
+    tickSimulatedVR();
+    updateOrbitControls();
     updateRobot();
-    checkTimerEvents(); // Check for timer events
+    checkTimerEvents();
     renderer.render(scene, camera);
 });
-// animate(); removed
 
-// Initialize Blockly
-const workspace = Blockly.inject("blocklyDiv", {
-    toolbox: document.getElementById("toolbox"),
+// ── Blockly workspace ──
+const workspace = Blockly.inject('blocklyDiv', {
+    toolbox: document.getElementById('toolbox'),
 });
 
-// Make available globally for eval'd code
+// ── Global API exposed to eval'd block code ──
 window.addToQueue = addToQueue;
-window.setDriveVelocity = setDriveVelocity;
-window.setTurnVelocity = setTurnVelocity;
-window.setDriveHeading = setDriveHeading;
-window.setDriveRotation = setDriveRotation;
-window.setDriveTimeout = setDriveTimeout;
-window.isDriveDone = isDriveDone;
-window.isDriveMoving = isDriveMoving;
-window.getDriveHeading = getDriveHeading;
-window.getDriveRotation = getDriveRotation;
 
-// Sensor functions
-window.isBumperPressed = isBumperPressed;
-window.onBumperEvent = onBumperEvent;
+window.setDriveVelocity  = setDriveVelocity;
+window.setTurnVelocity   = setTurnVelocity;
+window.setDriveHeading   = setDriveHeading;
+window.setDriveRotation  = setDriveRotation;
+window.setDriveTimeout   = setDriveTimeout;
+window.isDriveDone       = isDriveDone;
+window.isDriveMoving     = isDriveMoving;
+window.getDriveHeading   = getDriveHeading;
+window.getDriveRotation  = getDriveRotation;
+
+window.isBumperPressed     = isBumperPressed;
+window.onBumperEvent       = onBumperEvent;
 window.distanceFoundObject = distanceFoundObject;
-window.getObjectDistance = getObjectDistance;
-window.eyeNearObject = eyeNearObject;
-window.eyeDetectsColor = eyeDetectsColor;
-window.getEyeBrightness = getEyeBrightness;
-window.onEyeEvent = onEyeEvent;
-window.getPosition = getPosition;
+window.getObjectDistance   = getObjectDistance;
+window.eyeNearObject       = eyeNearObject;
+window.eyeDetectsColor     = eyeDetectsColor;
+window.getEyeBrightness    = getEyeBrightness;
+window.onEyeEvent          = onEyeEvent;
+window.getPosition         = getPosition;
 
-// Console functions
-window.printToConsole = printToConsole;
-window.setCursorToNextRow = setCursorToNextRow;
-window.clearAllRows = clearAllRows;
-window.setPrintPrecision = setPrintPrecision;
-window.setPrintColor = setPrintColor;
+window.printToConsole     = printToConsole;
+window.setCursorToNextRow  = setCursorToNextRow;
+window.clearAllRows       = clearAllRows;
+window.setPrintPrecision   = setPrintPrecision;
+window.setPrintColor       = setPrintColor;
 
-// Timer functions
-window.resetTimer = resetTimer;
-window.getTimerSeconds = getTimerSeconds;
-window.onTimerEvent = onTimerEvent;
+window.resetTimer      = resetTimer;
+window.getTimerSeconds  = getTimerSeconds;
+window.onTimerEvent    = onTimerEvent;
 
-// Events functions
-window.onEvent = onEvent;
-window.broadcastEvent = broadcastEvent;
+window.onEvent              = onEvent;
+window.broadcastEvent        = broadcastEvent;
 window.broadcastEventAndWait = broadcastEventAndWait;
 
-// Define the run function called by the button
+// ── Button handlers ──
+
 window.runCode = function () {
-    console.log("Run clicked");
+    console.log('Run clicked');
     clearQueue();
-    initTimer(); // Initialize timer
-    clearEventListeners(); // Clear previous event listeners
-
-    // Generate code from blocks
+    initTimer();
+    clearEventListeners();
     const code = Blockly.JavaScript.workspaceToCode(workspace);
-    console.log("Generated Code:", code);
-
+    console.log('Generated Code:', code);
     try {
-        // Evaluate the code to populate the queue
         eval(code);
-        // Start processing the queue
         runCommands();
     } catch (e) {
         console.error(e);
-        alert("Error running code: " + e);
+        alert('Error running code: ' + e);
     }
 };
 
-// Stop code execution
 window.stopCode = function () {
-    console.log("Stop clicked");
+    console.log('Stop clicked');
     stopExecution();
     clearQueue();
-    // Stop any ongoing robot movement
-    import('./scene/robot.js').then(module => {
-        module.stopDriving();
-    });
+    import('./scene/robot.js').then(m => m.stopDriving());
 };
 
-// Reset robot to starting position
 window.resetRobot = function () {
-    console.log("Reset clicked");
+    console.log('Reset clicked');
     clearQueue();
     resetRobotScene();
-    // Reset sensor states
     setBumperState('left', false);
     setBumperState('right', false);
 };
 
-// Exit VR mode (placeholder for future VR implementation)
-window.exitVR = function () {
-    console.log("Exit VR clicked");
-    alert("VR mode not yet implemented. This will exit VR mode in the future.");
+/**
+ * Enter VR — HEADSET mode.
+ * Bound to the toolbar "Enter VR" button (onclick="window.enterVR()").
+ *
+ * KEY POINT: enterVRHeadset() calls navigator.xr.requestSession() which MUST
+ * be invoked within a real, visible-button user gesture. This function is
+ * assigned directly as the onclick of the visible toolbar button, so the
+ * browser trust chain is fully preserved.
+ */
+window.enterVR = async function () {
+    console.log('Enter VR (Headset) clicked');
+    await enterVRHeadset();
 };
 
-// Bumper button handlers
+/**
+ * Enter VR — SIMULATED / Desktop mode.
+ * Bound to the "Enter VR (Simulated)" overlay button inside the 3D scene.
+ * Activates first-person mouse-look + WASD movement on desktop, no headset needed.
+ */
+window.enterVRSimulated = function () {
+    console.log('Enter VR (Simulated) clicked');
+    enterSimulatedVR();
+};
+
+/**
+ * Exit VR — works for both modes.
+ * Called when the toolbar button switches to "Exit VR" during an active session.
+ */
+window.exitVR = async function () {
+    console.log('Exit VR clicked');
+    if (isSimulatedVR()) {
+        exitSimulatedVR();
+    } else if (isVRPresenting()) {
+        await exitVRHeadset();
+    }
+};
+
 window.pressBumper = function (bumper) {
     console.log(`${bumper} bumper pressed`);
     setBumperState(bumper, true);
-    const btnId = bumper === 'left' ? 'left-bumper-btn' : 'right-bumper-btn';
-    document.getElementById(btnId).classList.add('pressed');
+    document.getElementById(bumper === 'left' ? 'left-bumper-btn' : 'right-bumper-btn')
+        ?.classList.add('pressed');
 };
 
 window.releaseBumper = function (bumper) {
     console.log(`${bumper} bumper released`);
     setBumperState(bumper, false);
-    const btnId = bumper === 'left' ? 'left-bumper-btn' : 'right-bumper-btn';
-    document.getElementById(btnId).classList.remove('pressed');
+    document.getElementById(bumper === 'left' ? 'left-bumper-btn' : 'right-bumper-btn')
+        ?.classList.remove('pressed');
 };
-
-// Handle window resize for scene
-// (Already handled in scene.js listener, but good to ensure renderer attachment keeps size)

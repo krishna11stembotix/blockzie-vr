@@ -7,7 +7,6 @@
     <title>Blockzie AR/VR Demo</title>
 
     <!-- Libraries -->
-    <!-- Libraries -->
     <script src="https://unpkg.com/blockly/blockly.min.js"></script>
     <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
     <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
@@ -24,30 +23,313 @@
     <style>
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            margin: 0;
             display: flex;
+            flex-direction: column;
             height: 100vh;
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             overflow: hidden;
+            background: #0d1b2a;
+        }
+
+        /* ── Top Header Bar ── */
+        #header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0d1b2a;
+            padding: 0 20px;
+            height: 52px;
+            flex-shrink: 0;
+            border-bottom: 1px solid #1e2d3e;
+        }
+
+        #logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        #logo-icon {
+            width: 34px;
+            height: 34px;
+            background: #FF8C00;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        #logo span.vr-highlight {
+            color: #FF8C00;
+        }
+
+        #coding-playground-btn {
+            padding: 7px 18px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        #coding-playground-btn:hover {
+            background: white;
+            color: #0d1b2a;
+        }
+
+        /* ── Main content area (below header) ── */
+        #main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ── Left panel: Block Editor ── */
+        #left-panel {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #1e2d3e;
+            background: #f5f5f5;
+        }
+
+        .panel-header {
+            background: #0d1b2a;
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .panel-header .dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #FF8C00;
+            display: inline-block;
         }
 
         #blocklyDiv {
-            width: 40%;
-            height: 100%;
-            border-right: 1px solid #ddd;
+            flex: 1;
+            overflow: hidden;
         }
 
-        /* Blockly workspace styling */
+        /* ── Right panel: 3D Scene + Console ── */
+        #right-panel {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+            background: #0d1b2a;
+        }
+
+        /* ── Scene toolbar ── */
+        #scene-toolbar {
+            background: #0d1b2a;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            border-bottom: 1px solid #1e2d3e;
+        }
+
+        #scene-panel-header {
+            background: #0d1b2a;
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            border-bottom: 1px solid #1e2d3e;
+        }
+
+        /* ── Toolbar buttons ── */
+        .tb-btn {
+            padding: 7px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            cursor: pointer;
+            background: white;
+            color: #222;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tb-btn:hover {
+            background: #f0f0f0;
+        }
+
+        #stop-btn {
+            border-color: #aaa;
+        }
+
+        #reset-btn {
+            border-color: #aaa;
+        }
+
+        #enter-vr-btn {
+            background: #FF8C00;
+            color: white;
+            border-color: #FF8C00;
+        }
+
+        #enter-vr-btn:hover {
+            background: #e07a00;
+            border-color: #e07a00;
+        }
+
+        #left-bumper-btn,
+        #right-bumper-btn {
+            border-color: #aaa;
+        }
+
+        #left-bumper-btn.pressed,
+        #right-bumper-btn.pressed {
+            background: #ddd;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        #run-btn {
+            margin-left: auto;
+            padding: 7px 18px;
+            font-size: 14px;
+            font-weight: 700;
+            background: #FF8C00;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #run-btn:hover {
+            background: #e07a00;
+        }
+
+        /* ── 3D Scene ── */
+        #scene {
+            flex: 1;
+            position: relative;
+            background: #d0dce8;
+            overflow: hidden;
+        }
+
+        /* Enter VR (Simulated) overlay button in scene */
+        #enter-vr-simulated-btn {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            background: #0d1b2a;
+            color: white;
+            border: 2px solid #FF8C00;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        #enter-vr-simulated-btn:hover {
+            background: #1a2d40;
+        }
+
+        /* ── Console ── */
+        #console-section {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            height: 130px;
+            border-top: 1px solid #1e2d3e;
+        }
+
+        #console-panel-header {
+            background: #0d1b2a;
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        #console-output {
+            flex: 1;
+            padding: 10px 14px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            background: #111c28;
+            color: #c8d8e8;
+        }
+
+        .console-row {
+            margin-bottom: 3px;
+            word-wrap: break-word;
+        }
+
+        #console-output::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #console-output::-webkit-scrollbar-track {
+            background: #0d1b2a;
+        }
+
+        #console-output::-webkit-scrollbar-thumb {
+            background: #2e4a63;
+            border-radius: 4px;
+        }
+
+        /* Blockly overrides */
         .blocklyMainBackground {
             fill: #ffffff !important;
         }
 
         .blocklyToolboxDiv {
-            background-color: #f5f5f5 !important;
-            border-right: 1px solid #ddd !important;
+            background-color: #e8e8e8 !important;
+            border-right: 1px solid #ccc !important;
         }
 
         .blocklyFlyoutBackground {
@@ -64,195 +346,69 @@
             font-size: 14px !important;
             font-weight: 500 !important;
         }
-
-        .blocklyTreeIcon {
-            width: 32px !important;
-            height: 32px !important;
-        }
-
-        #scene {
-            width: 60%;
-            height: 100%;
-            position: relative;
-            background: #e8eef7;
-        }
-
-        #run-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 10;
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: 600;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-            transition: all 0.2s ease;
-        }
-
-        #run-btn:hover {
-            background: #45a049;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            transform: translateY(-1px);
-        }
-
-        #run-btn:active {
-            transform: translateY(0);
-        }
-
-        /* Control buttons panel */
-        #controls-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .control-btn {
-            padding: 10px 20px;
-            font-size: 14px;
-            font-weight: 600;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-            transition: all 0.2s ease;
-            min-width: 140px;
-            text-align: left;
-        }
-
-        .control-btn:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            transform: translateY(-1px);
-        }
-
-        .control-btn:active {
-            transform: translateY(0);
-        }
-
-        #stop-btn {
-            background: #f44336;
-        }
-
-        #stop-btn:hover {
-            background: #da190b;
-        }
-
-        #reset-btn {
-            background: #FF9800;
-        }
-
-        #reset-btn:hover {
-            background: #e68900;
-        }
-
-        #exit-vr-btn {
-            background: #9C27B0;
-        }
-
-        #exit-vr-btn:hover {
-            background: #7b1fa2;
-        }
-
-        .bumper-btn {
-            background: #2196F3;
-        }
-
-        .bumper-btn:hover {
-            background: #0b7dda;
-        }
-
-        .bumper-btn.pressed {
-            background: #0d47a1;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Console panel */
-        #console-panel {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 300px;
-            max-height: 200px;
-            background: rgba(255, 255, 255, 0.95);
-            border: 2px solid #A5D6A7;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        #console-header {
-            background: #A5D6A7;
-            color: #333;
-            padding: 8px 12px;
-            font-weight: 600;
-            font-size: 14px;
-            border-bottom: 1px solid #81C784;
-        }
-
-        #console-output {
-            flex: 1;
-            padding: 10px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.4;
-            background: white;
-        }
-
-        .console-row {
-            margin-bottom: 4px;
-            word-wrap: break-word;
-        }
-
-        #console-output::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        #console-output::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-
-        #console-output::-webkit-scrollbar-thumb {
-            background: #A5D6A7;
-            border-radius: 4px;
-        }
-
-        #console-output::-webkit-scrollbar-thumb:hover {
-            background: #81C784;
-        }
     </style>
 </head>
 
 <body>
-    <div id="blocklyDiv"></div>
-    <div id="scene">
-        <button id="run-btn" onclick="runCode()">▶ Run Code</button>
-        <div id="controls-panel">
-            <button id="stop-btn" class="control-btn" onclick="stopCode()">⏹ Stop</button>
-            <button id="reset-btn" class="control-btn" onclick="resetRobot()">Reset</button>
-            <button id="exit-vr-btn" class="control-btn" onclick="exitVR()">🚪 Exit VR</button>
-            <button id="left-bumper-btn" class="control-btn bumper-btn" onmousedown="pressBumper('left')"
-                onmouseup="releaseBumper('left')" ontouchstart="pressBumper('left')"
-                ontouchend="releaseBumper('left')">◀ Left Bumper</button>
-            <button id="right-bumper-btn" class="control-btn bumper-btn" onmousedown="pressBumper('right')"
-                onmouseup="releaseBumper('right')" ontouchstart="pressBumper('right')"
-                ontouchend="releaseBumper('right')">▶ Right Bumper</button>
+
+    <!-- Top Header -->
+    <div id="header">
+        <div id="logo">
+            <div id="logo-icon">🟧</div>
+            Blockzie <span class="vr-highlight">VR</span> Lab
         </div>
-        <div id="console-panel">
-            <div id="console-header">Console</div>
-            <div id="console-output"></div>
+        <button id="coding-playground-btn" onclick="">CODING PLAYGROUND</button>
+    </div>
+
+    <!-- Main layout -->
+    <div id="main">
+
+        <!-- Left: Block Editor -->
+        <div id="left-panel">
+            <div class="panel-header">
+                <span class="dot"></span> BLOCK EDITOR
+            </div>
+            <div id="blocklyDiv"></div>
+        </div>
+
+        <!-- Right: 3D Scene + Console -->
+        <div id="right-panel">
+
+            <!-- Scene header with toolbar -->
+            <div id="scene-panel-header">
+                <span class="dot"></span> 3D SCENE
+
+                <!-- Toolbar buttons inline with header -->
+                <div style="display:flex; align-items:center; gap:8px; margin-left: 16px; flex:1;">
+                    <button id="stop-btn" class="tb-btn" onclick="stopCode()">■ Stop</button>
+                    <button id="reset-btn" class="tb-btn" onclick="resetRobot()">↺ Reset</button>
+                    <button id="enter-vr-btn" class="tb-btn" onclick="enterVR()">🥽 Enter VR</button>
+                    <button id="left-bumper-btn" class="tb-btn"
+                        onmousedown="pressBumper('left')" onmouseup="releaseBumper('left')"
+                        ontouchstart="pressBumper('left')" ontouchend="releaseBumper('left')">◀ Left Bumper</button>
+                    <button id="right-bumper-btn" class="tb-btn"
+                        onmousedown="pressBumper('right')" onmouseup="releaseBumper('right')"
+                        ontouchstart="pressBumper('right')" ontouchend="releaseBumper('right')">▶ Right Bumper</button>
+                    <button id="run-btn" onclick="runCode()">▶ Run Code</button>
+                </div>
+            </div>
+
+            <!-- 3D Scene canvas -->
+            <div id="scene">
+                <!-- Desktop VR simulation button inside scene -->
+                <button id="enter-vr-simulated-btn" onclick="enterVRSimulated()">
+                    🥽 Enter VR (Simulated)
+                </button>
+            </div>
+
+            <!-- Console -->
+            <div id="console-section">
+                <div id="console-panel-header">
+                    <span class="dot"></span> CONSOLE
+                </div>
+                <div id="console-output"></div>
+            </div>
+
         </div>
     </div>
 
@@ -272,7 +428,6 @@
                 <block type="turn_to_rotation"></block>
                 <block type="stop_driving"></block>
             </category>
-
             <category name="Settings" colour="#7EC4E8">
                 <block type="set_drive_velocity"></block>
                 <block type="set_turn_velocity"></block>
@@ -280,7 +435,6 @@
                 <block type="set_drive_rotation"></block>
                 <block type="set_drive_timeout"></block>
             </category>
-
             <category name="Values" colour="#7EC4E8">
                 <block type="drive_is_done"></block>
                 <block type="drive_is_moving"></block>
@@ -345,45 +499,26 @@
                 <block type="break"></block>
                 <block type="stop_project"></block>
             </category>
-
             <category name="Timer" colour="#4C97FF">
                 <block type="reset_timer"></block>
                 <block type="timer_in_seconds"></block>
                 <block type="when_timer"></block>
             </category>
-
             <category name="Events" colour="#FFD500">
                 <block type="when_i_receive"></block>
                 <block type="broadcast"></block>
                 <block type="broadcast_and_wait"></block>
             </category>
-
             <category name="Operators" colour="#40BF4A">
                 <block type="math_number"></block>
                 <block type="text"></block>
                 <block type="math_operator">
-                    <value name="A">
-                        <shadow type="math_number">
-                            <field name="NUM">0</field>
-                        </shadow>
-                    </value>
-                    <value name="B">
-                        <shadow type="math_number">
-                            <field name="NUM">0</field>
-                        </shadow>
-                    </value>
+                    <value name="A"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                    <value name="B"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
                 </block>
                 <block type="comparison_operator">
-                    <value name="A">
-                        <shadow type="math_number">
-                            <field name="NUM">0</field>
-                        </shadow>
-                    </value>
-                    <value name="B">
-                        <shadow type="math_number">
-                            <field name="NUM">50</field>
-                        </shadow>
-                    </value>
+                    <value name="A"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                    <value name="B"><shadow type="math_number"><field name="NUM">50</field></shadow></value>
                 </block>
                 <block type="logical_operator"></block>
                 <block type="not_operator"></block>
@@ -394,16 +529,8 @@
                 <block type="atan2"></block>
                 <block type="remainder"></block>
                 <block type="join">
-                    <value name="A">
-                        <shadow type="text">
-                            <field name="TEXT">apple</field>
-                        </shadow>
-                    </value>
-                    <value name="B">
-                        <shadow type="text">
-                            <field name="TEXT">banana</field>
-                        </shadow>
-                    </value>
+                    <value name="A"><shadow type="text"><field name="TEXT">apple</field></shadow></value>
+                    <value name="B"><shadow type="text"><field name="TEXT">banana</field></shadow></value>
                 </block>
                 <block type="letter"></block>
                 <block type="length"></block>
@@ -413,7 +540,6 @@
         </category>
 
         <category name="Variables" colour="#FF8C1A" custom="VARIABLE"></category>
-
         <category name="My Blocks" colour="#5CA6DB" custom="PROCEDURE"></category>
 
         <category name="Comments" colour="#FFFFCC">
@@ -430,9 +556,7 @@
         <category name="Control" colour="#FFAB19">
             <block type="controls_repeat_ext">
                 <value name="TIMES">
-                    <shadow type="math_number">
-                        <field name="NUM">4</field>
-                    </shadow>
+                    <shadow type="math_number"><field name="NUM">4</field></shadow>
                 </value>
             </block>
         </category>
@@ -441,6 +565,23 @@
     <!-- Logic Scripts -->
     <script src="./src/blockly/blocks.js"></script>
     <script src="./src/blockly/generator.js"></script>
+
+    <!-- Shim for functions called by buttons (enter/exit VR) -->
+    <script>
+        // enterVRSimulated is the desktop VR mode (simulated, no headset)
+        function enterVRSimulated() {
+            if (typeof enterVR === 'function') enterVR({ simulated: true });
+        }
+        // enterVR (toolbar button) triggers headset VR
+        // exitVR shim in case it's called before main.js loads
+        window.exitVR = window.exitVR || function() {};
+        window.pressBumper = window.pressBumper || function() {};
+        window.releaseBumper = window.releaseBumper || function() {};
+        window.runCode = window.runCode || function() {};
+        window.stopCode = window.stopCode || function() {};
+        window.resetRobot = window.resetRobot || function() {};
+        window.enterVR = window.enterVR || function() {};
+    </script>
 
     <!-- Main Module -->
     <script type="module" src="./src/main.js"></script>
