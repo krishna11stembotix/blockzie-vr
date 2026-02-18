@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { scene } from './scene/scene.js'; // Import scene to add goals
 import { resetRobot } from './scene/robot.js';
 import { stopExecution, clearQueue } from './runtime/executor.js';
+import { showVRMissionComplete } from './scene/vr_ui.js';
 
 export let currentMission = null;
 export let missionGoal = null;
@@ -100,5 +101,6 @@ function showMissionComplete() {
     if (overlay) {
         overlay.style.display = 'block';
     }
+    showVRMissionComplete();
     console.log("Mission Complete!");
 }

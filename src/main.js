@@ -11,6 +11,8 @@ import {
 import { initRobot, updateRobot, resetRobot as resetRobotScene, getRobotMesh } from './scene/robot.js';
 import { checkMissionComplete } from './missions.js';
 import { addToQueue, clearQueue, runCommands, stopExecution } from './runtime/executor.js';
+import { initControllers, updateControllerRaycaster, controllers } from './scene/vr_controllers.js';
+import { initVRUI, updateVRUI, handleVRUISelect } from './scene/vr_ui.js';
 import {
     setDriveVelocity,
     setTurnVelocity,
@@ -115,6 +117,12 @@ renderer.setAnimationLoop(function () {
     updateRobot();
     checkMissionComplete(getRobotMesh());
     checkTimerEvents();
+
+    if (renderer.xr.isPresenting) {
+        updateControllerRaycaster();
+        updateVRUI();
+    }
+
     renderer.render(scene, camera);
 });
 
@@ -204,6 +212,14 @@ window.resetRobot = function () {
  */
 window.enterVR = async function () {
     console.log('Enter VR (Headset) clicked');
+
+    // Initialize VR controllers and UI
+    if (controllers.length === 0) {
+        initControllers();
+        initVRUI();
+        controllers.forEach(c => c.addEventListener('select', handleVRUISelect));
+    }
+
     await enterVRHeadset();
 };
 
