@@ -119,4 +119,15 @@
         inputElement.value = "";
     };
 
+    /**
+     * Clears the current workspace to start a new project.
+     */
+    window.newProject = function () {
+        if (confirm("Are you sure you want to start a new project? Unsaved changes will be lost.")) {
+            if (Blockly && Blockly.getMainWorkspace()) {
+                Blockly.getMainWorkspace().clear();
+            }
+        }
+    };
+
 })();
