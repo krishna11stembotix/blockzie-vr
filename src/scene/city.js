@@ -18,7 +18,7 @@ function createGround(scene) {
     // Road/Asphalt base
     const planeGeometry = new THREE.PlaneGeometry(200, 200);
     const planeMaterial = new THREE.MeshStandardMaterial({
-        color: 0x333333,
+        color: 0xffffff,
         roughness: 0.8,
         metalness: 0.1
     });

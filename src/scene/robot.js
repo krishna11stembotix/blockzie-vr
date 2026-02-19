@@ -26,7 +26,7 @@ let activeMovement = null; // Promise for tracking async movements
 
 export function initRobot() {
     const loader = new GLTFLoader();
-    loader.load('./src/assets/robot2.glb', function (gltf) {
+    loader.load('./src/assets/stembot.glb', function (gltf) {
         robotMesh = gltf.scene;
 
         // Normalize scale (robots can be huge)
