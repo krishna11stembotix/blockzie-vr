@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/blockly/blockly.min.js"></script>
     <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
     <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- Import Map for Three.js -->
     <script type="importmap">
     {
@@ -86,9 +87,52 @@
             transition: all 0.2s ease;
             text-transform: uppercase;
         }
+
         .header-btn:hover {
             background: white;
             color: #0d1b2a;
+        }
+
+        /* Dropdown Container */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Dropdown Content (Hidden by Default) */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            /* Ensure it stays on top */
+            border-radius: 4px;
+            top: 100%;
+            /* Position below the button */
+            left: 0;
+        }
+
+        /* Link inside the dropdown */
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* Change color of dropdown links on hover */
+        .dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Show the dropdown menu (use JS to add this class) */
+        .show {
+            display: block;
         }
 
         #coding-playground-btn {
@@ -105,7 +149,7 @@
             text-transform: uppercase;
         }
 
-        
+
 
         /* ── Main content area (below header) ── */
         #main {
@@ -496,6 +540,15 @@
             Blockzie <span class="vr-highlight">VR</span> Lab
         </div>
         <div style="display: flex; gap: 15px; align-items: center;">
+            <div class="dropdown">
+                <button onclick="toggleDropdown()" class="header-btn">FILE ▼</button>
+                <div id="fileDropdown" class="dropdown-content">
+                    <a onclick="newProject()">New File</a>
+                    <a onclick="document.getElementById('file-upload').click()">Load File</a>
+                    <a onclick="saveProject()">Save File</a>
+                </div>
+            </div>
+            <input type="file" id="file-upload" accept=".sb3,.zip" style="display: none;" onchange="loadProject(this)">
             <button class="header-btn" onclick="toggleMissions()">MISSIONS</button>
             <button id="coding-playground-btn" onclick="closeMissions()">CODING PLAYGROUND</button>
         </div>
@@ -526,12 +579,12 @@
                     <button id="stop-btn" class="tb-btn" onclick="stopCode()">■ Stop</button>
                     <button id="reset-btn" class="tb-btn" onclick="resetRobot()">↺ Reset</button>
                     <button id="enter-vr-btn" class="tb-btn" onclick="enterVR()"> Enter VR</button>
-                    <button id="left-bumper-btn" class="tb-btn"
-                        onmousedown="pressBumper('left')" onmouseup="releaseBumper('left')"
-                        ontouchstart="pressBumper('left')" ontouchend="releaseBumper('left')">◀ Left Bumper</button>
-                    <button id="right-bumper-btn" class="tb-btn"
-                        onmousedown="pressBumper('right')" onmouseup="releaseBumper('right')"
-                        ontouchstart="pressBumper('right')" ontouchend="releaseBumper('right')">▶ Right Bumper</button>
+                    <button id="left-bumper-btn" class="tb-btn" onmousedown="pressBumper('left')"
+                        onmouseup="releaseBumper('left')" ontouchstart="pressBumper('left')"
+                        ontouchend="releaseBumper('left')">◀ Left Bumper</button>
+                    <button id="right-bumper-btn" class="tb-btn" onmousedown="pressBumper('right')"
+                        onmouseup="releaseBumper('right')" ontouchstart="pressBumper('right')"
+                        ontouchend="releaseBumper('right')">▶ Right Bumper</button>
                     <button id="run-btn" onclick="runCode()">▶ Run Code</button>
                 </div>
             </div>
@@ -540,7 +593,7 @@
             <div id="scene">
                 <!-- Desktop VR simulation button inside scene -->
                 <button id="enter-vr-simulated-btn" onclick="enterVRSimulated()">
-                     Enter VR (Simulated)
+                    Enter VR (Simulated)
                 </button>
             </div>
 
@@ -753,6 +806,7 @@
     <!-- Logic Scripts -->
     <script src="./src/blockly/blocks.js"></script>
     <script src="./src/blockly/generator.js"></script>
+    <script src="./src/project_manager.js"></script>
 
     <!-- Shim for functions called by buttons (enter/exit VR) -->
     <script>
@@ -792,6 +846,25 @@
                 window.missionLogic.startMission(id);
             }
         };
+
+        /* File Dropdown Logic */
+        window.toggleDropdown = function () {
+            document.getElementById("fileDropdown").classList.toggle("show");
+        }
+
+        // Close the dropdown if the user clicks outside of it
+        window.onclick = function (event) {
+            if (!event.target.matches('.header-btn')) {
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                var i;
+                for (i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
 
         // Initialize simplified mission logic namespace
         window.missionLogic = {
