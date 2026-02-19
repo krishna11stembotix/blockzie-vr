@@ -16,6 +16,8 @@ import { updatePenDrawing } from './pen.js';
 let robotMesh;
 // Target states for animation
 const targetPosition = new THREE.Vector3(0, 0, 0); // Start at 0,0,0 (on grid)
+let restingY = 0;
+
 // Adjust Y in the loader 
 
 const targetRotation = new THREE.Euler(0, 0, 0);
@@ -27,33 +29,48 @@ let activeMovement = null; // Promise for tracking async movements
 export function initRobot() {
     const loader = new GLTFLoader();
     loader.load('./src/assets/stembot.glb', function (gltf) {
-        robotMesh = gltf.scene;
+        // The raw model
+        const model = gltf.scene;
 
         // Normalize scale (robots can be huge)
-        // Bounding box check
-        const box = new THREE.Box3().setFromObject(robotMesh);
+        const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());
+
         // Scale to roughly 1 unit high
         const scaleFactor = 1 / size.y;
-        robotMesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        model.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-        // Position on ground (assuming origin is center, we want feet on ground)
-        // If origin is center, we need to raise it by half height.
-        // Actually usually 0 is fine if the model is rigged well.
-        // Let's assume 0.
+        // Rotate the model 180 degrees to face -Z (standard forward)
+        // This fixes the "moving backward" issue
+        model.rotation.y = Math.PI;
 
+        // Create a wrapper group
+        robotMesh = new THREE.Group();
+        robotMesh.add(model);
+
+        // Re-calculate box to find the bottom
+        // We can check the model's box after update
+        model.updateMatrixWorld(true);
+        const box2 = new THREE.Box3().setFromObject(model);
+
+        // Calculate Y needed to put feet on ground (y=0)
+        restingY = -box2.min.y;
+
+        // Apply starting position to the wrapper
+        targetPosition.set(0, restingY, 0);
         robotMesh.position.copy(targetPosition);
 
         scene.add(robotMesh);
-        console.log("Robot loaded");
+        console.log("Robot loaded. Resting Y:", restingY);
     }, undefined, function (error) {
         console.error("An error occurred loading the robot:", error);
         // Fallback to cube
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshNormalMaterial();
         robotMesh = new THREE.Mesh(geometry, material);
+        restingY = 0.5;
+        targetPosition.set(0, restingY, 0);
         robotMesh.position.copy(targetPosition);
-        robotMesh.position.y = 0.5; // Sit on grid
         scene.add(robotMesh);
     });
 }
@@ -268,7 +285,7 @@ export function turnToRotation(targetRotationDegrees) {
 
 // Reset logic if needed
 export function resetRobot() {
-    targetPosition.set(0, 0, 0);
+    targetPosition.set(0, restingY, 0);
     targetRotation.set(0, 0, 0);
     continuousMotion = null;
     if (robotMesh) {
