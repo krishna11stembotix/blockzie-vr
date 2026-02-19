@@ -10,42 +10,72 @@
      * The .sb3 file is a ZIP archive containing a 'project.json' file with the XML representation of the workspace.
      */
     window.saveProject = function () {
-        if (!Blockly || !Blockly.getMainWorkspace()) {
-            console.error("Blockly workspace not found.");
+        // Debug alert
+        // alert("Save Project clicked");
+
+        if (typeof JSZip === 'undefined') {
+            alert("Error: JSZip library not loaded.");
+            console.error("JSZip not found");
             return;
         }
 
-        const workspace = Blockly.getMainWorkspace();
-        let xmlDom;
-        if (Blockly.Xml && Blockly.Xml.workspaceToDom) {
-            xmlDom = Blockly.Xml.workspaceToDom(workspace);
-        } else {
-            // Fallback for newer versions or different bundles
-            xmlDom = Blockly.Xml.workspaceToDom(workspace);
+        if (!Blockly || !Blockly.getMainWorkspace()) {
+            console.error("Blockly workspace not found.");
+            alert("Error: Blockly workspace not found.");
+            return;
         }
 
-        // Ensure we have the xml utils
-        const xmlUtils = Blockly.utils ? Blockly.utils.xml : Blockly.Xml;
+        try {
+            const workspace = Blockly.getMainWorkspace();
+            let xmlDom;
 
-        const xmlText = xmlUtils.domToPrettyText(xmlDom);
+            // diverse blockly versions support different xml serialization
+            if (Blockly.Xml && typeof Blockly.Xml.workspaceToDom === 'function') {
+                xmlDom = Blockly.Xml.workspaceToDom(workspace);
+            } else if (Blockly.utils && Blockly.utils.xml && typeof Blockly.utils.xml.workspaceToDom === 'function') {
+                // Future proofing, though usually workspaceToDom is on Blockly.Xml
+                xmlDom = Blockly.utils.xml.workspaceToDom(workspace);
+            } else {
+                // Try standard fallback
+                xmlDom = Blockly.Xml.workspaceToDom(workspace);
+            }
 
-        // Create a ZIP file
-        const zip = new JSZip();
+            // Ensure we have the xml utils for text conversion
+            // In many versions, domToPrettyText is directly on Blockly.Xml
+            let xmlUtils = Blockly.Xml;
 
-        // Add the XML as 'project.xml' (or json if we were doing true scratch)
-        // For simplicity and to ensure we can load it back easily in this specific app, 
-        // we'll stick to XML but wrap it in the zip. 
-        // We can also add a meta.json if needed later.
-        zip.file("project.xml", xmlText);
+            if (!xmlUtils || typeof xmlUtils.domToPrettyText !== 'function') {
+                // Try utils.xml as failsafe
+                xmlUtils = Blockly.utils && Blockly.utils.xml ? Blockly.utils.xml : null;
+            }
 
-        // Generate the zip and trigger download
-        zip.generateAsync({ type: "blob" })
-            .then(function (content) {
-                downloadBlob(content, "project.sb3");
+            if (!xmlUtils || typeof xmlUtils.domToPrettyText !== 'function') {
+                throw new Error("XML serialization utilities (domToPrettyText) not found.");
+            }
+
+            const xmlText = xmlUtils.domToPrettyText(xmlDom);
+
+            // Create a ZIP file
+            const zip = new JSZip();
+            zip.file("project.xml", xmlText);
+
+            // Generate the zip and trigger download
+            zip.generateAsync({
+                type: "blob",
+                mimeType: "application/zip"
             })
-            .catch(function (err) {
-                console.error("Failed to generate project file:", err);
-            });
+                .then(function (content) {
+                    downloadBlob(content, "project.sb3");
+                })
+                .catch(function (err) {
+                    console.error("Failed to generate project file:", err);
+                    alert("Failed to generate project file: " + err.message);
+                });
+
+        } catch (e) {
+            console.error("Error in saveProject:", e);
+            alert("Error saving project: " + e.message);
+        }
     };
 
     /**
@@ -54,14 +84,26 @@
      * @param {string} filename 
      */
     function downloadBlob(blob, filename) {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        try {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+
+            // Debug alert for VR verification
+            // alert("Starting download: " + filename); 
+
+            a.click();
+
+            document.body.removeChild(a);
+            setTimeout(function () {
+                URL.revokeObjectURL(url);
+            }, 100);
+        } catch (e) {
+            alert("Error saving file: " + e.message);
+            console.error("Download error:", e);
+        }
     }
 
     /**
